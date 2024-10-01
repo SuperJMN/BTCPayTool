@@ -30,7 +30,7 @@ public class PluginCreator
 
     private async Task AddPlugin()
     {
-        Log.Information("Adding plugin...");
+        Log.Information("Adding plugin {Name}...", PluginName);
         
         if (Path.Exists(PluginPath))
         {
