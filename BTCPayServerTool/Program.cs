@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
+using Microsoft.Build.Utilities;
 using Serilog;
+using Task = System.Threading.Tasks.Task;
 
 namespace BTCPayServerTool;
 
@@ -12,7 +14,9 @@ public static class Program
             .WriteTo.Console()
             .CreateLogger();
 
-        var creator = new PluginCreator(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "MyPlugin");
+        var outputDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        var creator = new PluginCreator(outputDir, "MyPlugin");
         await creator.Create();
+        Log.Information("The plugin has been added successfully! You can see it under {Path}", creator.PluginPath);
     }
 }

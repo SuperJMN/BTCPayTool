@@ -1,7 +1,9 @@
 using System.IO.Compression;
+using Microsoft.Build.Utilities;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.Git;
 using Serilog;
+using Task = System.Threading.Tasks.Task;
 
 namespace BTCPayServerTool;
 
@@ -28,11 +30,29 @@ public class PluginCreator
 
     private async Task AddPlugin()
     {
+        Log.Information("Adding plugin...");
+        
+        if (Path.Exists(PluginPath))
+        {
+            Log.Warning("Plugin {Name} already exists at {Path}. Skipping.", PluginName, PluginPath);
+            return;
+        }
+        
         var branch = "wip";
-        var streamAsync = await new HttpClient().GetStreamAsync($"https://github.com/superjmn/btcpayserver-plugin-template/archive/refs/heads/{branch}.zip");
+        var templateUri = $"https://github.com/superjmn/btcpayserver-plugin-template/archive/refs/heads/{branch}.zip";
+        
+        Log.Information("Fetching template from {Uri}", templateUri);
+        await CopyTemplate(templateUri, branch);
+        Log.Information("Plugin added");
+    }
+
+    private async Task CopyTemplate(string templateUri, string branch)
+    {
+        using var httpClient = new HttpClient();
+        await using var streamAsync = await httpClient.GetStreamAsync(templateUri);
         var zipArchive = new ZipArchive(streamAsync, ZipArchiveMode.Read);
 
-        var templatePath = $"btcpayserver-plugin-template-{branch}/BTCPayServer.Plugins.MyPlugin/";
+        var templatePath = $"btcpayserver-plugin-template-{branch}/MyPlugin/";
         var entriesToExtract = zipArchive.Entries.Where(x => x.FullName.StartsWith(templatePath) && x.Name != "");
         foreach (var entry in entriesToExtract)
         {
