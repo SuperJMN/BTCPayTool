@@ -15,7 +15,7 @@ public static class Program
             .CreateLogger();
 
         var outputDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        var creator = new PluginCreator(outputDir, "MyPlugin");
+        var creator = new PluginCreator(outputDir, "SuperJMN");
         await creator.Create();
         Log.Information("The plugin has been added successfully! You can see it under {Path}", creator.PluginPath);
     }

@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using Microsoft.Build.Utilities;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.Git;
 using Serilog;
@@ -18,7 +17,7 @@ public class PluginCreator
         PluginPath = ServerPath / "BTCPayServer" / "Plugins" / pluginName;
     }
 
-    public AbsolutePath PluginPath { get; set; }
+    public AbsolutePath PluginPath { get; }
 
     public AbsolutePath ServerPath { get; }
 
@@ -26,6 +25,18 @@ public class PluginCreator
     {
         CloneBtcPayServer();
         await AddPlugin();
+        RenameFiles();
+        ReplaceNames();
+    }
+
+    private void ReplaceNames()
+    {
+        Utils.ReplaceStringInFiles(ServerPath, "MyPlugin", PluginName);
+    }
+
+    private void RenameFiles()
+    {
+        Utils.ReplaceStringInFilenames(PluginPath, "MyPlugin", PluginName);
     }
 
     private async Task AddPlugin()
