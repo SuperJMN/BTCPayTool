@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BTCPayServerTool", "BTCPayServerTool\BTCPayServerTool.csproj", "{8CE17835-E0FA-4811-B86B-0D1C55ADF09C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BTCPayTool", "BTCPayTool\BTCPayTool.csproj", "{8CE17835-E0FA-4811-B86B-0D1C55ADF09C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{55ACD238-610C-4472-8BD7-C9DC20FBB2F2}"
 EndProject

@@ -3,7 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tools.Git;
 using Serilog;
 
-namespace BTCPayServerTool;
+namespace BTCPayTool;
 
 public class PluginCreator
 {

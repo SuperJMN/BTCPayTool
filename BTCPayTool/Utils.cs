@@ -1,6 +1,6 @@
 using Serilog;
 
-namespace BTCPayServerTool;
+namespace BTCPayTool;
 
 public static class Utils
 {

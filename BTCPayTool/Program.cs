@@ -1,10 +1,9 @@
 ﻿using System.Reflection;
 using CommandLine;
-using Microsoft.Build.Utilities;
 using Serilog;
 using Task = System.Threading.Tasks.Task;
 
-namespace BTCPayServerTool;
+namespace BTCPayTool;
 
 [Verb("new-plugin", HelpText = "Crear un nuevo plugin.")]
 class NewPluginOptions
