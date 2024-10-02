@@ -2,7 +2,6 @@ using System.IO.Compression;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.Git;
 using Serilog;
-using Task = System.Threading.Tasks.Task;
 
 namespace BTCPayServerTool;
 
@@ -25,21 +24,19 @@ public class PluginCreator
     {
         CloneBtcPayServer();
         await AddPlugin();
-        RenameFiles();
-        ReplaceNames();
     }
 
-    private void ReplaceNames()
+    private void ReplaceTextInTemplateFiles()
     {
         Utils.ReplaceStringInFiles(ServerPath, "MyPlugin", PluginName);
     }
 
-    private void RenameFiles()
+    private void RenameTemplateFiles()
     {
         Utils.ReplaceStringInFilenames(PluginPath, "MyPlugin", PluginName);
     }
-
-    private async Task AddPlugin()
+    
+    public async Task AddPlugin()
     {
         Log.Information("Adding plugin {Name}...", PluginName);
         
@@ -49,6 +46,13 @@ public class PluginCreator
             return;
         }
         
+        await AddPluginCore();
+        RenameTemplateFiles();
+        ReplaceTextInTemplateFiles();
+    }
+
+    private async Task AddPluginCore()
+    {
         var branch = "wip";
         var templateUri = $"https://github.com/superjmn/btcpayserver-plugin-template/archive/refs/heads/{branch}.zip";
         
@@ -86,7 +90,7 @@ public class PluginCreator
             return;
         }
 
-        Log.Information("Cloning BTCPayServer...");
+        Log.Information("Cloning BTCPayServer..");
         GitTasks.Git("clone https://github.com/btcpayserver/btcpayserver.git");
         Log.Information("BTCPayServer cloned successfully...");
     }
