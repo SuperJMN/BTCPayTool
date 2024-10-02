@@ -28,7 +28,7 @@ public static class Program
 
     private static async Task<int> ExecuteNewPlugin(NewPluginOptions opts)
     {
-        var outputDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        var outputDir = Directory.GetCurrentDirectory();
         var creator = new PluginCreator(outputDir, opts.Name);
         await creator.Create();
         Log.Information("The plugin has been added successfully! You can see it under {Path}", creator.PluginPath);

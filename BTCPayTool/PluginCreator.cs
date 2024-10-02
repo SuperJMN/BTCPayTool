@@ -82,16 +82,15 @@ public class PluginCreator
 
     private static void CloneBtcPayServer()
     {
-        Log.Information("Cloning BTCPayServer...");
-
+        Log.Information("Cloning BTCPayServer..");
+        
         if (Directory.Exists("btcpayserver"))
         {
             Log.Information("Folder already exist. Skipping");
             return;
         }
-
-        Log.Information("Cloning BTCPayServer..");
-        GitTasks.Git("clone https://github.com/btcpayserver/btcpayserver.git");
+        
+        GitTasks.Git("clone https://github.com/btcpayserver/btcpayserver.git", logger: (_, _) => { }, logOutput: false, logInvocation: false);
         Log.Information("BTCPayServer cloned successfully...");
     }
 }
