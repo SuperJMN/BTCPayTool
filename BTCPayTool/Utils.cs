@@ -17,7 +17,7 @@ public static class Utils
                 var dir = Path.GetDirectoryName(file);
                 var newFilename = fileName.Replace(toReplace, replacement);
                 var newPath = Path.Combine(dir, newFilename);
-                File.Move(file, newPath);
+                File.Move(file, newPath, true);
                 Log.Debug("Renamed: {Old}, {New}", file, newPath);
             }
         }

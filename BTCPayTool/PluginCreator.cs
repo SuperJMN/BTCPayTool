@@ -1,96 +1,25 @@
 using System.IO.Compression;
+using CSharpFunctionalExtensions;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.Git;
 using Serilog;
+using Zafiro.FileSystem.Core;
 
 namespace BTCPayTool;
 
 public class PluginCreator
 {
-    public string PluginName { get; }
-
-    public PluginCreator(AbsolutePath root, string pluginName)
+    public PluginCreator(IGitClient gitClient, ZafiroPath root)
     {
-        PluginName = pluginName;
-        ServerPath = root / "btcpayserver";
-        PluginPath = ServerPath / "BTCPayServer" / "Plugins" / pluginName;
+        GitClient = gitClient;
+        Root = root;
     }
 
-    public AbsolutePath PluginPath { get; }
+    public IGitClient GitClient { get; }
+    public ZafiroPath Root { get; }
 
-    public AbsolutePath ServerPath { get; }
-
-    public async Task Create()
+    public Task<Result<ZafiroPath>> Create(string name)
     {
-        CloneBtcPayServer();
-        await AddPlugin();
-    }
-
-    private void ReplaceTextInTemplateFiles()
-    {
-        Utils.ReplaceStringInFiles(ServerPath, "MyPlugin", PluginName);
-    }
-
-    private void RenameTemplateFiles()
-    {
-        Utils.ReplaceStringInFilenames(PluginPath, "MyPlugin", PluginName);
-    }
-    
-    public async Task AddPlugin()
-    {
-        Log.Information("Adding plugin {Name}...", PluginName);
-        
-        if (Path.Exists(PluginPath))
-        {
-            Log.Warning("Plugin {Name} already exists at {Path}. Skipping.", PluginName, PluginPath);
-            return;
-        }
-        
-        await AddPluginCore();
-        RenameTemplateFiles();
-        ReplaceTextInTemplateFiles();
-    }
-
-    private async Task AddPluginCore()
-    {
-        var branch = "wip";
-        var templateUri = $"https://github.com/superjmn/btcpayserver-plugin-template/archive/refs/heads/{branch}.zip";
-        
-        Log.Information("Fetching template from {Uri}", templateUri);
-        await CopyTemplate(templateUri, branch);
-        Log.Information("Plugin added");
-    }
-
-    private async Task CopyTemplate(string templateUri, string branch)
-    {
-        using var httpClient = new HttpClient();
-        await using var streamAsync = await httpClient.GetStreamAsync(templateUri);
-        var zipArchive = new ZipArchive(streamAsync, ZipArchiveMode.Read);
-
-        var templatePath = $"btcpayserver-plugin-template-{branch}/MyPlugin/";
-        var entriesToExtract = zipArchive.Entries.Where(x => x.FullName.StartsWith(templatePath) && x.Name != "");
-        foreach (var entry in entriesToExtract)
-        {
-            var subPath = entry.FullName[templatePath.Length..];
-            var finalPath = PluginPath / subPath;
-            Directory.CreateDirectory(finalPath.Parent);
-            await using var fileStream = File.Open(finalPath, FileMode.Create, FileAccess.Write);
-            await using var entryStream = entry.Open();
-            await entryStream.CopyToAsync(fileStream);
-        }
-    }
-
-    private static void CloneBtcPayServer()
-    {
-        Log.Information("Cloning BTCPayServer..");
-        
-        if (Directory.Exists("btcpayserver"))
-        {
-            Log.Information("Folder already exist. Skipping");
-            return;
-        }
-        
-        GitTasks.Git("clone https://github.com/btcpayserver/btcpayserver.git", logger: (_, _) => { }, logOutput: false, logInvocation: false);
-        Log.Information("BTCPayServer cloned successfully...");
+        return new PluginDeployment(Root, name, GitClient).Deploy();
     }
 }

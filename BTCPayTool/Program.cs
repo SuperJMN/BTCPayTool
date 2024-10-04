@@ -1,16 +1,9 @@
-﻿using System.Reflection;
-using CommandLine;
+﻿using CommandLine;
+using CSharpFunctionalExtensions;
 using Serilog;
-using Task = System.Threading.Tasks.Task;
+using Zafiro.CSharpFunctionalExtensions;
 
 namespace BTCPayTool;
-
-[Verb("new-plugin", HelpText = "Crear un nuevo plugin.")]
-class NewPluginOptions
-{
-    [Option("name", Default = "MyPlugin", HelpText = "Plugin name")]
-    public string Name { get; set; }
-}
 
 public static class Program
 {
@@ -29,9 +22,13 @@ public static class Program
     private static async Task<int> ExecuteNewPlugin(NewPluginOptions opts)
     {
         var outputDir = Directory.GetCurrentDirectory();
-        var creator = new PluginCreator(outputDir, opts.Name);
-        await creator.Create();
-        Log.Information("The plugin has been added successfully! You can see it under {Path}", creator.PluginPath);
-        return 0;
+        var creator = new PluginCreator(new GitClient(outputDir), outputDir);
+        var result = await creator.Create(opts.Name);
+        
+        result
+            .Tap(pluginPath => Log.Information("The plugin has been added successfully! You can see it under {Path}", pluginPath))
+            .TapError(error =>  Log.Error("Plugin creation failed: {Error}", error));
+        
+        return result.Match(_ => 0, _ => -1);
     }
 }
