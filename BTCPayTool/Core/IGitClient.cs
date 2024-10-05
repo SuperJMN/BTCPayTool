@@ -1,6 +1,4 @@
-using CSharpFunctionalExtensions;
-
-namespace BTCPayTool;
+namespace BTCPayTool.Core;
 
 public interface IGitClient
 {

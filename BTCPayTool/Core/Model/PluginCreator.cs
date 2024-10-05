@@ -1,11 +1,6 @@
-using System.IO.Compression;
-using CSharpFunctionalExtensions;
-using Nuke.Common.IO;
-using Nuke.Common.Tools.Git;
-using Serilog;
-using Zafiro.FileSystem.Core;
+using BTCPayTool.Core.Operations;
 
-namespace BTCPayTool;
+namespace BTCPayTool.Core;
 
 public class PluginCreator
 {
@@ -20,6 +15,6 @@ public class PluginCreator
 
     public Task<Result<ZafiroPath>> Create(string name)
     {
-        return new PluginDeployment(Root, name, GitClient).Deploy();
+        return new Plugin(Root, name, GitClient).Create();
     }
 }

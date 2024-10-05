@@ -1,16 +1,15 @@
 using System.Diagnostics;
-using CSharpFunctionalExtensions;
 
-namespace BTCPayTool.Tests;
+namespace BTCPayTool.Core;
 
-public class GitWrapper
+public class ProcessWrapper
 {
-    public static Result ExecuteGitCommand(string arguments, string workingDirectory = "")
+    public static Result Execute(string command, string arguments, string workingDirectory = "")
     {
         try
         {
             // Configuramos el proceso para ejecutar Git
-            var processInfo = new ProcessStartInfo("git", arguments)
+            var processInfo = new ProcessStartInfo(command, arguments)
             {
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -25,18 +24,16 @@ public class GitWrapper
                 process.Start();
 
                 // Capturamos la salida estándar y de error
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
+                var output = process.StandardOutput.ReadToEnd();
+                var error = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
                 if (process.ExitCode == 0)
                 {
                     return Result.Success(output.Trim()); // Comando exitoso
                 }
-                else
-                {
-                    return Result.Failure($"Error al ejecutar el comando Git: {error.Trim()}");
-                }
+
+                return Result.Failure($"Error al ejecutar el comando Git: {error.Trim()}");
             }
         }
         catch (Exception ex)

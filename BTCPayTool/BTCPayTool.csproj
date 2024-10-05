@@ -13,12 +13,12 @@
 
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.9.1"/>
-        <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+        <PackageReference Include="LibGit2Sharp" Version="0.30.0"/>
         <PackageReference Include="Nuke.Common" Version="8.1.0"/>
         <PackageReference Include="Nuke.Utilities" Version="8.1.0"/>
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
-        <PackageReference Include="Zafiro" Version="11.0.1" />
-        <PackageReference Include="Zafiro.FileSystem.Local" Version="11.0.1" />
+        <PackageReference Include="Zafiro" Version="11.0.1"/>
+        <PackageReference Include="Zafiro.FileSystem.Local" Version="11.0.1"/>
     </ItemGroup>
 
 </Project>

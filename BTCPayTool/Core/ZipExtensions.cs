@@ -1,8 +1,6 @@
 using System.IO.Compression;
-using CSharpFunctionalExtensions;
-using Zafiro.FileSystem.Core;
 
-namespace BTCPayTool;
+namespace BTCPayTool.Core;
 
 public static class ZipExtensions
 {
