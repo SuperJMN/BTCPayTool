@@ -1,41 +1,43 @@
-using Serilog;
-
-namespace BTCPayTool;
+namespace BTCPayTool.Core;
 
 public static class Utils
 {
     public static void ReplaceStringInFilenames(string directory, string toReplace, string replacement)
     {
-        string[] files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
+        var files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
 
-        foreach (string file in files)
+        foreach (var file in files)
         {
-            string fileName = Path.GetFileName(file);
+            var fileName = Path.GetFileName(file);
 
             if (fileName.Contains(toReplace))
             {
                 var dir = Path.GetDirectoryName(file);
                 var newFilename = fileName.Replace(toReplace, replacement);
                 var newPath = Path.Combine(dir, newFilename);
-                File.Move(file, newPath);
+                File.Move(file, newPath, true);
                 Log.Debug("Renamed: {Old}, {New}", file, newPath);
             }
         }
     }
-    
+
     public static void ReplaceStringInFiles(string directory, string toReplace, string replacement)
     {
-        string[] files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
+        var files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
 
-        foreach (string file in files)
+        foreach (var file in files)
         {
-            string content = File.ReadAllText(file);
+            var content = File.ReadAllText(file);
             if (content.Contains(toReplace))
             {
-                string newContent = content.Replace(toReplace, replacement);
+                var newContent = content.Replace(toReplace, replacement);
                 File.WriteAllText(file, newContent);
             }
         }
     }
 
+    public static Result AddProjectToSolution(string projectPath)
+    {
+        return Result.Try(() => ProcessWrapper.Execute("dotnet", $"sln add {projectPath}"));
+    }
 }
