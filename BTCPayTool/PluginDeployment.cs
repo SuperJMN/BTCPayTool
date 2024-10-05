@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using CSharpFunctionalExtensions;
 using Serilog;
 using Zafiro.FileSystem.Core;
@@ -66,19 +65,6 @@ public class PluginDeployment
         return Result.Try(() => Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name));
     }
 
-    private Task<Result> CopyTemplate(string templateUri, string branch)
-    {
-        var templatePath = $"btcpayserver-plugin-template-{branch}/MyPlugin";
-        
-        return ResultExtensions.Using(async () =>
-        {
-            using var httpClient = new HttpClient();
-            await using var streamAsync = await httpClient.GetStreamAsync(templateUri);
-            var zipArchive = new ZipArchive(streamAsync, ZipArchiveMode.Read);
-            return zipArchive;
-        }, archive => archive.ExtractDirectory(templatePath, PluginRoot));
-    }
-    
     private async Task<Result> AddBtcPayServerSubmodule()
     {
         Log.Information("Adding BTCPayServer Submodule...");

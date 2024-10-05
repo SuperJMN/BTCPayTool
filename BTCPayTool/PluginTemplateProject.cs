@@ -48,12 +48,15 @@ public class PluginTemplateProject
     {
         var templatePath = $"btcpayserver-plugin-template-{branch}/MyPlugin";
         
-        return ResultExtensions.Using(async () =>
+        return ResultExtensions.Using(() =>
         {
-            using var httpClient = new HttpClient();
-            await using var streamAsync = await httpClient.GetStreamAsync(templateUri);
-            var zipArchive = new ZipArchive(streamAsync, ZipArchiveMode.Read);
-            return zipArchive;
+            return Result.Try(async () =>
+            {
+                using var httpClient = new HttpClient();
+                await using var streamAsync = await httpClient.GetStreamAsync(templateUri);
+                var zipArchive = new ZipArchive(streamAsync, ZipArchiveMode.Read);
+                return zipArchive;
+            });
         }, archive => archive.ExtractDirectory(templatePath, directory));
     }
 }

@@ -22,12 +22,17 @@ public static class ResultExtensions
         }
     }
     
-    public static async Task<Result> Using<TDisposable>(Func<Task<TDisposable>> factory, Func<TDisposable, Task<Result>> func)
+    public static async Task<Result> Using<TDisposable>(Func<Task<Result<TDisposable>>> factory, Func<TDisposable, Task<Result>> func)
         where TDisposable : IDisposable
     {
-        using (var disposable = await factory())
+        var result = await factory().ConfigureAwait(false);
+
+        return await result.Bind(disposable =>
         {
-            return await func(disposable);
-        }
+            using (disposable)
+            {
+                return func(disposable);
+            }
+        }).ConfigureAwait(false);
     }
 }
