@@ -1,9 +1,10 @@
 using BTCPayTool.Core;
+using BTCPayTool.Core.Model;
 using FluentAssertions;
 
 namespace BTCPayTool.Tests;
 
-public class UnitTest1
+public class Tests
 {
     [Fact]
     public async Task Test1()

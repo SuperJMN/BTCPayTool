@@ -1,4 +1,4 @@
-namespace BTCPayTool.Core.Operations;
+namespace BTCPayTool.Core.Model;
 
 public class Plugin
 {
@@ -17,21 +17,16 @@ public class Plugin
 
     public ZafiroPath PluginRoot { get; }
 
-    public Task<Result<ZafiroPath>> Create()
-    {
-        return AddPlugin().Map(() => PluginRoot);
-    }
-
-    private async Task<Result> AddPlugin()
+    public async Task<Result<ZafiroPath>> Create()
     {
         Log.Information("Adding plugin {Name}...", Name);
 
         if (Path.Exists(PluginRoot))
         {
-            return Result.Failure($"Plugin {Name} already exists");
+            return Result.Failure<ZafiroPath>($"Plugin {Name} already exists");
         }
 
-        return await AddPluginCore().Bind(AddPluginProjectToSolution);
+        return await AddPluginCore().Bind(AddPluginProjectToSolution).Map(() => PluginRoot);
     }
 
     private Result AddPluginProjectToSolution()

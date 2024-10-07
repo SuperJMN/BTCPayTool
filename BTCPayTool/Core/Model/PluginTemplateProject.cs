@@ -1,6 +1,6 @@
 using System.IO.Compression;
 
-namespace BTCPayTool.Core;
+namespace BTCPayTool.Core.Model;
 
 public class PluginTemplateProject
 {

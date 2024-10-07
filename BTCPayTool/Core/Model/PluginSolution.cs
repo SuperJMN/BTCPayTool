@@ -1,4 +1,4 @@
-namespace BTCPayTool.Core.Operations;
+namespace BTCPayTool.Core.Model;
 
 public class PluginSolution
 {

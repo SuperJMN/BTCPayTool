@@ -1,6 +1,4 @@
-using BTCPayTool.Core.Operations;
-
-namespace BTCPayTool.Core;
+namespace BTCPayTool.Core.Model;
 
 public class PluginCreator
 {
