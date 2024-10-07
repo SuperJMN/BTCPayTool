@@ -44,7 +44,7 @@ public class PluginSolution
     
     private async Task<Result> AddBtcPayServerSubmodule()
     {
-        Log.Information("Adding BTCPayServer server submodule...");
+        Log.Information("Adding BTCPayServer submodule...");
 
         if (Directory.Exists("btcpayserver"))
         {
