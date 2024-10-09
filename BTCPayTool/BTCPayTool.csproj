@@ -9,6 +9,11 @@
         <ToolCommandName>btcpay</ToolCommandName>
         <AssemblyName>BTCPayTool</AssemblyName>
         <RootNamespace>BTCPayTool</RootNamespace>
+        <PackageProjectUrl>https://btcpayserver.org</PackageProjectUrl>
+        <PackageIcon>btcpaytool.png</PackageIcon>
+        <RepositoryUrl>https://github.com/btcpayserver/btcpayserver</RepositoryUrl>
+        <RepositoryType>GIT</RepositoryType>
+        <PackageTags>BTCPay</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
