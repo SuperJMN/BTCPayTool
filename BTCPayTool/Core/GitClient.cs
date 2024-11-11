@@ -2,12 +2,12 @@ namespace BTCPayTool.Core;
 
 public class GitClient : IGitClient
 {
-    public GitClient(ZafiroPath path)
+    public GitClient(string path)
     {
         Path = path;
     }
 
-    public ZafiroPath Path { get; }
+    public string Path { get; }
 
     public Result AddSubmodule(string name, Uri uri)
     {
@@ -26,6 +26,6 @@ public class GitClient : IGitClient
 
     private bool ExistsSubmodule(string name)
     {
-        return Directory.Exists(Path.Combine(name));
+        return Directory.Exists(System.IO.Path.Combine(Path, name));
     }
 }

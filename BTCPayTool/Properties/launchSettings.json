@@ -1,8 +1,14 @@
 {
   "profiles": {
-    "BTCPayTool": {
+    "Add plugin": {
       "commandName": "Project",
-      "commandLineArgs": "new-plugin"
+      "commandLineArgs": "new-plugin --name MyPlugin",
+      "workingDirectory": "C:\\Users\\JMN\\Desktop\\BTCPayTesting"
+    },
+    "Initialize plugin solution": {
+      "commandName": "Project",
+      "commandLineArgs": "init-plugin --name BestPlugins",
+      "workingDirectory": "C:\\Users\\JMN\\Desktop\\BTCPayTesting"
     }
   }
 }

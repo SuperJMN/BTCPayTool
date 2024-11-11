@@ -2,28 +2,28 @@ namespace BTCPayTool.Core.Model;
 
 public class Plugin
 {
-    public Plugin(ZafiroPath root, string name, IGitClient gitClient)
+    public Plugin(string root, string name, IGitClient gitClient)
     {
         Root = root;
         Name = name;
-        PluginRoot = root.Combine("Plugins").Combine(name);
+        PluginRoot = Path.Combine(root, "Plugins", name);
         GitClient = gitClient;
     }
 
-    public ZafiroPath Root { get; }
+    public string Root { get; }
     public string Name { get; }
 
     public IGitClient GitClient { get; }
 
-    public ZafiroPath PluginRoot { get; }
+    public string PluginRoot { get; }
 
-    public async Task<Result<ZafiroPath>> Create()
+    public async Task<Result<string>> Create()
     {
         Log.Information("Adding plugin {Name}...", Name);
 
         if (Path.Exists(PluginRoot))
         {
-            return Result.Failure<ZafiroPath>($"Plugin {Name} already exists");
+            return Result.Failure<string>($"Plugin {Name} already exists");
         }
 
         return await AddPluginCore().Bind(AddPluginProjectToSolution).Map(() => PluginRoot);
