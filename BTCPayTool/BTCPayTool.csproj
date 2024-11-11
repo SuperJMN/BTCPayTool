@@ -17,10 +17,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
-        <PackageReference Include="Zafiro" Version="11.0.1"/>
-        <PackageReference Include="Zafiro.FileSystem" Version="11.0.1"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+        <PackageReference Include="Zafiro" Version="11.0.1" />
+        <PackageReference Include="Zafiro.FileSystem" Version="11.0.1" />
     </ItemGroup>
 
 </Project>

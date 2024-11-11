@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BTCPayTool": {
+      "commandName": "Project",
+      "commandLineArgs": "new-plugin"
+    }
+  }
+}
