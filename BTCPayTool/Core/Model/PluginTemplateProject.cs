@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using BTCPayTool.Misc;
+using Microsoft.Extensions.Logging;
 
 namespace BTCPayTool.Core.Model;
 
@@ -11,50 +13,45 @@ public class PluginTemplateProject
 
     public string Name { get; }
 
-    public Task<Result> CopyTo(string directory)
+    public async Task CopyTo(string directory)
     {
-        return Result.Success()
-            .Bind(() => CreatePluginFromTemplate(directory))
-            .Bind(() => RenameTemplateFiles(directory))
-            .Bind(() => ReplaceTextInTemplateFiles(directory));
+        await CreatePluginFromTemplate(directory);
+        RenameTemplateFiles(directory);
+        ReplaceTextInTemplateFiles(directory);
     }
 
-    private async Task<Result> CreatePluginFromTemplate(string directory)
+    private async Task CreatePluginFromTemplate(string directory)
     {
         Directory.CreateDirectory(directory);
 
         var branch = "wip";
         var templateUri = $"https://github.com/superjmn/btcpayserver-plugin-template/archive/refs/heads/{branch}.zip";
 
-        Log.Information("Fetching template from {Uri}", templateUri);
-        var result = await ExtractTemplate(templateUri, branch, directory);
-        Log.Information("Plugin added");
-        return result;
+        Logger.GlobalLogger.LogInformation("Fetching template from {Uri}", templateUri);
+
+        await ExtractTemplate(templateUri, branch, directory);
+
+        Logger.GlobalLogger.LogInformation("Plugin added");
     }
 
-    private Result ReplaceTextInTemplateFiles(string directory)
+    private void ReplaceTextInTemplateFiles(string directory)
     {
-        return Result.Try(() => Utils.ReplaceStringInFiles(directory, "MyPlugin", Name));
+        Utils.ReplaceStringInFiles(directory, "MyPlugin", Name);
     }
 
-    private Result RenameTemplateFiles(string directory)
+    private void RenameTemplateFiles(string directory)
     {
-        return Result.Try(() => Utils.ReplaceStringInFilenames(directory, "MyPlugin", Name));
+        Utils.ReplaceStringInFilenames(directory, "MyPlugin", Name);
     }
 
-    private Task<Result> ExtractTemplate(string templateUri, string branch, string directory)
+    private async Task ExtractTemplate(string templateUri, string branch, string directory)
     {
         var templatePath = $"btcpayserver-plugin-template-{branch}/MyPlugin";
 
-        return ResultExtensions.Using(() =>
-        {
-            return Result.Try(async () =>
-            {
-                using var httpClient = new HttpClient();
-                await using var streamAsync = await httpClient.GetStreamAsync(templateUri);
-                var zipArchive = new ZipArchive(streamAsync, ZipArchiveMode.Read);
-                return zipArchive;
-            });
-        }, archive => archive.ExtractDirectory(templatePath, directory));
+        using var httpClient = new HttpClient();
+        await using var stream = await httpClient.GetStreamAsync(templateUri);
+        
+        using var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
+        await zipArchive.ExtractDirectory(templatePath, directory);
     }
 }

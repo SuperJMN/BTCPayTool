@@ -11,7 +11,7 @@ public class PluginCreator
     public IGitClient GitClient { get; }
     public string Root { get; }
 
-    public Task<Result<string>> Create(string name)
+    public Task<string> Create(string name)
     {
         return new Plugin(Root, name, GitClient).Create();
     }

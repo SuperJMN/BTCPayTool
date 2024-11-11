@@ -11,6 +11,6 @@ public class Tests
     {
         var newPluginCreator = new PluginCreator(new GitClient("Output"), "Output");
         var result = await newPluginCreator.Create("MyPlugin");
-        result.Should().Succeed();
+        result.Should().NotBe(null);
     }
 }

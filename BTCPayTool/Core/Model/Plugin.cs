@@ -1,3 +1,6 @@
+using BTCPayTool.Misc;
+using Microsoft.Extensions.Logging;
+
 namespace BTCPayTool.Core.Model;
 
 public class Plugin
@@ -12,48 +15,53 @@ public class Plugin
 
     public string Root { get; }
     public string Name { get; }
-
     public IGitClient GitClient { get; }
-
     public string PluginRoot { get; }
 
-    public async Task<Result<string>> Create()
+    public async Task<string> Create()
     {
-        Log.Information("Adding plugin {Name}...", Name);
+        Logger.GlobalLogger.LogInformation("Adding plugin {Name}...", Name);
 
-        if (Path.Exists(PluginRoot))
+        if (Directory.Exists(PluginRoot))
         {
-            return Result.Failure<string>($"Plugin {Name} already exists");
+            throw new InvalidOperationException($"Plugin {Name} already exists");
         }
 
-        return await AddPluginCore().Bind(AddPluginProjectToSolution).Map(() => PluginRoot);
+        await AddPluginCore();
+        AddPluginProjectToSolution();
+
+        return PluginRoot;
     }
 
-    private Result AddPluginProjectToSolution()
+    private async Task AddPluginCore()
     {
-        Log.Information("Adding plugin to solution...");
-
-        var projectResult = Result.Try(() => Directory.GetFiles(PluginRoot, "*.csproj")).Bind(strings => strings.TryFirst().ToResult("Cannot find project file."));
-        
-        return projectResult
-            .Bind(Utils.AddProjectToSolution);
+        Directory.CreateDirectory(PluginRoot);
+        await new PluginTemplateProject(Name).CopyTo(PluginRoot);
+        RenameTemplateFiles();
+        ReplaceTextInTemplateFiles();
     }
 
-    private Task<Result> AddPluginCore()
+    private void AddPluginProjectToSolution()
     {
-        return Result.Try(() => Directory.CreateDirectory(PluginRoot))
-            .Bind(_ => new PluginTemplateProject(Name).CopyTo(PluginRoot))
-            .Bind(RenameTemplateFiles)
-            .Bind(ReplaceTextInTemplateFiles);
+        Logger.GlobalLogger.LogInformation("Adding plugin to solution...");
+
+        var projectFiles = Directory.GetFiles(PluginRoot, "*.csproj");
+        if (!projectFiles.Any())
+        {
+            throw new FileNotFoundException("Cannot find project file.");
+        }
+
+        var projectFile = projectFiles.First();
+        Utils.AddProjectToSolution(projectFile);
     }
 
-    private Result ReplaceTextInTemplateFiles()
+    private void RenameTemplateFiles()
     {
-        return Result.Try(() => Utils.ReplaceStringInFiles(PluginRoot, "MyPlugin", Name));
+        Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name);
     }
 
-    private Result RenameTemplateFiles()
+    private void ReplaceTextInTemplateFiles()
     {
-        return Result.Try(() => Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name));
+        Utils.ReplaceStringInFiles(PluginRoot, "MyPlugin", Name);
     }
 }

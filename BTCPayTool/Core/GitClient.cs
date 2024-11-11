@@ -1,3 +1,5 @@
+using BTCPayTool.Misc;
+
 namespace BTCPayTool.Core;
 
 public class GitClient : IGitClient
@@ -9,19 +11,29 @@ public class GitClient : IGitClient
 
     public string Path { get; }
 
-    public Result AddSubmodule(string name, Uri uri)
+    public async Task AddSubmodule(string name, Uri uri)
     {
-        return
-            Result
-                .Success()
-                .BindIf(() => !ExistsSubmodule(name), () => ProcessWrapper.Execute("git", $"submodule add {uri} {name}", Path))
-                .Bind(() => ProcessWrapper.Execute("git", "submodule init"))
-                .Bind(() => ProcessWrapper.Execute("git", "submodule update"));
+        if (!ExistsSubmodule(name))
+        {
+            var arguments = $"submodule add {uri} {name}";
+            await (Task) ProcessRunner.Instance.RunAsync(
+                new ProcessSpec {Executable = "git", Arguments = [arguments], WorkingDirectory = Path},
+                CancellationToken.None);
+        }
+
+        await (Task) ProcessRunner.Instance.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = ["submodule init"]},
+            CancellationToken.None);
+        await (Task) ProcessRunner.Instance.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = ["submodule update"]},
+            CancellationToken.None);
     }
 
-    public Result Init()
+    public async Task Init()
     {
-        return ProcessWrapper.Execute("git", "init", Path);
+        await (Task) ProcessRunner.Instance.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = ["init"], WorkingDirectory = Path},
+            CancellationToken.None);
     }
 
     private bool ExistsSubmodule(string name)

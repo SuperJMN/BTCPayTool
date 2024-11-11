@@ -1,6 +1,8 @@
 ﻿using BTCPayTool.Core;
 using BTCPayTool.Core.Model;
 using System.CommandLine;
+using Microsoft.Extensions.Logging;
+using BTCPayTool.Misc;
 
 namespace BTCPayTool
 {
@@ -8,9 +10,8 @@ namespace BTCPayTool
     {
         public static async Task<int> Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .CreateLogger();
+            ConfigureLogger();
+            ProcessRunner.Instance = new ProcessRunner(Logger.GetLogger<ProcessRunner>());
 
             var rootCommand = new RootCommand("BTCPayTool CLI tool");
 
@@ -38,29 +39,45 @@ namespace BTCPayTool
             return await rootCommand.InvokeAsync(args);
         }
 
+        private static void ConfigureLogger()
+        {
+            var factory = LoggerFactory.Create(builder => builder.AddConsole());
+            
+        }
+
         private static async Task InitializePluginSolution(InitializePluginSolutionOptions opts)
         {
-            var outputDir = Directory.GetCurrentDirectory();
-            var solution = new PluginSolution(outputDir, opts.Name, new GitClient(outputDir));
+            try
+            {
+                var outputDir = Directory.GetCurrentDirectory();
+                var solution = new PluginSolution(outputDir, opts.Name, new GitClient(outputDir));
 
-            var result = await solution.Initialize()
-                .Tap(() => Log.Information("The plugin solution has been initialized. You can now add your first plugin by executing: btcpay new-plugin --name MyPlugin"))
-                .TapError(error => Log.Error("Plugin creation failed: {Error}", error));
+                await solution.Initialize();
 
-            result.Match(() => 0, _ => -1);
+                Logger.GlobalLogger.LogInformation("The plugin solution has been initialized. You can now add your first plugin by executing: btcpay new-plugin --name MyPlugin");
+            }
+            catch (Exception ex)
+            {
+                Logger.GlobalLogger.LogError("Plugin solution initialization failed: {Error}", ex.Message);
+                Environment.Exit(-1);
+            }
         }
 
         private static async Task NewPlugin(NewPluginOptions opts)
         {
-            var outputDir = Directory.GetCurrentDirectory();
-            var plugin = new Plugin(outputDir, opts.Name, new GitClient(outputDir));
-            var result = await plugin.Create();
+            try
+            {
+                var outputDir = Directory.GetCurrentDirectory();
+                var plugin = new Plugin(outputDir, opts.Name, new GitClient(outputDir));
 
-            result
-                .Tap(pluginPath => Log.Information("The plugin has been added successfully! You can see it under {Path}", pluginPath))
-                .TapError(error => Log.Error("Plugin creation failed: {Error}", error));
-
-            result.Match(_ => 0, _ => -1);
+                var pluginPath = await plugin.Create();
+                Logger.GlobalLogger.LogInformation("The plugin has been added successfully! You can see it under {Path}", pluginPath);
+            }
+            catch (Exception ex)
+            {
+                Logger.GlobalLogger.LogError("Plugin creation failed: {Error}", ex.Message);
+                Environment.Exit(-1);
+            }
         }
     }
 }
