@@ -16,9 +16,14 @@ public class GitClient : IGitClient
         if (!ExistsSubmodule(name))
         {
             var arguments = $"submodule add {uri} {name}".Split(" ").AsReadOnly();
-            await ProcessRunner.Instance.RunAsync(
+            var result = await ProcessRunner.Instance.RunAsync(
                 new ProcessSpec {Executable = "git", Arguments = arguments, WorkingDirectory = Path},
                 CancellationToken.None);
+
+            if (result != 0)
+            {
+                throw new ApplicationException("Add submodule failed");
+            }
         }
 
         await ProcessRunner.Instance.RunAsync(

@@ -1,6 +1,5 @@
-﻿using BTCPayTool.Core;
-using BTCPayTool.Core.Model;
-using System.CommandLine;
+﻿using System.CommandLine;
+using BTCPayTool.Core;
 using Microsoft.Extensions.Logging;
 using BTCPayTool.Misc;
 
@@ -13,6 +12,7 @@ namespace BTCPayTool
         public static async Task<int> Main(string[] args)
         {
             ProcessRunner.Instance = new ProcessRunner(Misc.Logger.GetLogger<ProcessRunner>());
+            var tool = new Tool(Logger);
 
             var rootCommand = new RootCommand("BTCPayTool CLI tool");
 
@@ -22,7 +22,7 @@ namespace BTCPayTool
 
             newPluginCommand.SetHandler(async (string name) =>
             {
-                await NewPlugin(new NewPluginOptions { Name = name });
+                await tool.NewPlugin(new NewPluginOptions { Name = name });
             }, nameOption);
 
             var initPluginCommand = new Command("init-plugin", "Initializes a new plugin solution");
@@ -31,49 +31,13 @@ namespace BTCPayTool
 
             initPluginCommand.SetHandler(async (string name) =>
             {
-                await InitializePluginSolution(new InitializePluginSolutionOptions { Name = name });
+                await tool.InitializePluginSolution(new InitializePluginSolutionOptions { Name = name });
             }, solutionNameOption);
 
             rootCommand.AddCommand(newPluginCommand);
             rootCommand.AddCommand(initPluginCommand);
 
             return await rootCommand.InvokeAsync(args);
-        }
-
-        private static async Task InitializePluginSolution(InitializePluginSolutionOptions opts)
-        {
-            try
-            {
-                var outputDir = Directory.GetCurrentDirectory();
-                var solution = new PluginSolution(outputDir, opts.Name, new GitClient(outputDir), Logger);
-
-                await solution.Initialize();
-
-                Logger.LogInformation("The plugin solution has been initialized.");
-                Logger.LogInformation("You can now add your first plugin by executing: btcpay new-plugin --name MyPlugin\"");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Plugin solution initialization failed: {Error}", ex.Message);
-                Environment.Exit(-1);
-            }
-        }
-
-        private static async Task NewPlugin(NewPluginOptions opts)
-        {
-            try
-            {
-                var outputDir = Directory.GetCurrentDirectory();
-                var plugin = new Plugin(outputDir, opts.Name, new GitClient(outputDir), Logger);
-
-                var pluginPath = await plugin.Create();
-                Logger.LogInformation("The plugin has been added successfully! You can see it under {Path}", pluginPath);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Plugin creation failed: {Error}", ex.Message);
-                Environment.Exit(-1);
-            }
         }
     }
 }
