@@ -15,23 +15,23 @@ public class GitClient : IGitClient
     {
         if (!ExistsSubmodule(name))
         {
-            var arguments = $"submodule add {uri} {name}";
-            await (Task) ProcessRunner.Instance.RunAsync(
-                new ProcessSpec {Executable = "git", Arguments = [arguments], WorkingDirectory = Path},
+            var arguments = $"submodule add {uri} {name}".Split(" ").AsReadOnly();
+            await ProcessRunner.Instance.RunAsync(
+                new ProcessSpec {Executable = "git", Arguments = arguments, WorkingDirectory = Path},
                 CancellationToken.None);
         }
 
-        await (Task) ProcessRunner.Instance.RunAsync(
-            new ProcessSpec {Executable = "git", Arguments = ["submodule init"]},
+        await ProcessRunner.Instance.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = "submodule init".Split(" ").AsReadOnly()},
             CancellationToken.None);
-        await (Task) ProcessRunner.Instance.RunAsync(
-            new ProcessSpec {Executable = "git", Arguments = ["submodule update"]},
+        await ProcessRunner.Instance.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = "submodule update".Split(" ").AsReadOnly()},
             CancellationToken.None);
     }
 
     public async Task Init()
     {
-        await (Task) ProcessRunner.Instance.RunAsync(
+        await ProcessRunner.Instance.RunAsync(
             new ProcessSpec {Executable = "git", Arguments = ["init"], WorkingDirectory = Path},
             CancellationToken.None);
     }

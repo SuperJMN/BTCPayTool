@@ -5,8 +5,11 @@ namespace BTCPayTool.Core.Model;
 
 public class PluginSolution
 {
-    public PluginSolution(string root, string name, IGitClient gitClient)
+    private readonly ILogger logger;
+
+    public PluginSolution(string root, string name, IGitClient gitClient, ILogger logger)
     {
+        this.logger = logger;
         Root = root;
         Name = name;
         GitClient = gitClient;
@@ -25,7 +28,7 @@ public class PluginSolution
 
     private Task InitRepo()
     {
-        Logger.GlobalLogger.LogInformation("Initializing repository...");
+        logger.LogInformation("Initializing repository...");
 
         Directory.CreateDirectory(Root);
         GitClient.Init();
@@ -34,7 +37,7 @@ public class PluginSolution
 
     private async Task CreateSolution()
     {
-        Logger.GlobalLogger.LogInformation("Creating solution file...");
+        logger.LogInformation("Creating solution file...");
 
         var solutionName = Name + ".sln";
         if (File.Exists(solutionName))
@@ -43,12 +46,12 @@ public class PluginSolution
         }
 
         var arguments = $"new sln --name {Name}";
-        await ProcessRunner.Instance.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = [arguments]}, CancellationToken.None);
+        await ProcessRunner.Instance.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = arguments.Split(" ").AsReadOnly()}, CancellationToken.None);
     }
 
     private async Task AddBtcPayServerSubmodule()
     {
-        Logger.GlobalLogger.LogInformation("Adding BTCPayServer submodule...");
+        logger.LogInformation("Adding BTCPayServer submodule...");
 
         if (Directory.Exists("btcpayserver"))
         {

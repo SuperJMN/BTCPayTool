@@ -5,7 +5,7 @@ namespace BTCPayTool.Core;
 
 public static class Utils
 {
-    public static void ReplaceStringInFilenames(string directory, string toReplace, string replacement)
+    public static void ReplaceStringInFilenames(string directory, string toReplace, string replacement, ILogger logger)
     {
         var files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
 
@@ -20,7 +20,7 @@ public static class Utils
                 var newPath = Path.Combine(dir, newFilename);
 
                 File.Move(file, newPath, true);
-                Logger.GlobalLogger.LogDebug("Renamed: {Old}, {New}", file, newPath);
+                logger.LogDebug("Renamed: {Old}, {New}", file, newPath);
             }
         }
     }
@@ -42,6 +42,6 @@ public static class Utils
 
     public static async Task AddProjectToSolution(string projectPath)
     {
-        await ProcessRunner.Instance.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = [$"sln add {projectPath}"]}, CancellationToken.None);
+        await ProcessRunner.Instance.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = $"sln add {projectPath}".Split(" ").AsReadOnly()}, CancellationToken.None);
     }
 }

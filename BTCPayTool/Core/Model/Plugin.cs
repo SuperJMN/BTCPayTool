@@ -5,8 +5,11 @@ namespace BTCPayTool.Core.Model;
 
 public class Plugin
 {
-    public Plugin(string root, string name, IGitClient gitClient)
+    private readonly ILogger logger;
+
+    public Plugin(string root, string name, IGitClient gitClient, ILogger logger)
     {
+        this.logger = logger;
         Root = root;
         Name = name;
         PluginRoot = Path.Combine(root, "Plugins", name);
@@ -20,7 +23,7 @@ public class Plugin
 
     public async Task<string> Create()
     {
-        Logger.GlobalLogger.LogInformation("Adding plugin {Name}...", Name);
+        logger.LogInformation("Adding plugin {Name}...", Name);
 
         if (Directory.Exists(PluginRoot))
         {
@@ -36,14 +39,14 @@ public class Plugin
     private async Task AddPluginCore()
     {
         Directory.CreateDirectory(PluginRoot);
-        await new PluginTemplateProject(Name).CopyTo(PluginRoot);
+        await new PluginTemplateProject(Name, logger).CopyTo(PluginRoot);
         RenameTemplateFiles();
         ReplaceTextInTemplateFiles();
     }
 
     private void AddPluginProjectToSolution()
     {
-        Logger.GlobalLogger.LogInformation("Adding plugin to solution...");
+        logger.LogInformation("Adding plugin to solution...");
 
         var projectFiles = Directory.GetFiles(PluginRoot, "*.csproj");
         if (!projectFiles.Any())
@@ -57,7 +60,7 @@ public class Plugin
 
     private void RenameTemplateFiles()
     {
-        Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name);
+        Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name, logger);
     }
 
     private void ReplaceTextInTemplateFiles()
