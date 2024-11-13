@@ -43,9 +43,6 @@ namespace BTCPayTool.Misc
     {
         private static readonly Func<string, string?> _getEnvironmentVariable = static key => Environment.GetEnvironmentVariable(key);
 
-        public static ProcessRunner Instance { get; set; } =
-            new ProcessRunner(new Logger<ProcessRunner>(new NullLoggerFactory()));
-
         private ILogger<ProcessRunner> Logger { get; }
 
         public ProcessRunner(ILogger<ProcessRunner> logger)

@@ -5,19 +5,18 @@ namespace BTCPayTool.Core.Model;
 
 public class PluginSolution
 {
-    private readonly ILogger logger;
-
-    public PluginSolution(string root, string name, IGitClient gitClient, ILogger logger)
+    public PluginSolution(string root, string name, IGitClient gitClient, AppContext appContext)
     {
-        this.logger = logger;
         Root = root;
         Name = name;
         GitClient = gitClient;
+        AppContext = appContext;
     }
 
     public string Root { get; }
     public string Name { get; }
     public IGitClient GitClient { get; }
+    public AppContext AppContext { get; }
 
     public async Task Initialize()
     {
@@ -28,7 +27,7 @@ public class PluginSolution
 
     private Task InitRepo()
     {
-        logger.LogInformation("Initializing repository...");
+        AppContext.Logger.LogInformation("Initializing repository...");
 
         Directory.CreateDirectory(Root);
         GitClient.Init();
@@ -37,7 +36,7 @@ public class PluginSolution
 
     private async Task CreateSolution()
     {
-        logger.LogInformation("Creating solution file...");
+        AppContext.Logger.LogInformation("Creating solution file...");
 
         var solutionName = Name + ".sln";
         if (File.Exists(solutionName))
@@ -46,12 +45,12 @@ public class PluginSolution
         }
 
         var arguments = $"new sln --name {Name}";
-        await ProcessRunner.Instance.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = arguments.Split(" ").AsReadOnly()}, CancellationToken.None);
+        await AppContext.ProcessRunner.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = arguments.Split(" ").AsReadOnly()}, CancellationToken.None);
     }
 
     private async Task AddBtcPayServerSubmodule()
     {
-        logger.LogInformation("Adding BTCPayServer submodule...");
+        AppContext.Logger.LogInformation("Adding BTCPayServer submodule...");
 
         if (Directory.Exists("btcpayserver"))
         {
@@ -68,7 +67,7 @@ public class PluginSolution
 
         foreach (var projectFile in projectFiles)
         {
-            await Utils.AddProjectToSolution(projectFile);
+            await AppContext.SolutionHelper.AddProjectToSolution(projectFile);
         }
     }
 }

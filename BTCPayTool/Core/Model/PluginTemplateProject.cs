@@ -1,12 +1,12 @@
 using System.IO.Compression;
-using BTCPayTool.Misc;
 using Microsoft.Extensions.Logging;
 
 namespace BTCPayTool.Core.Model;
 
-public class PluginTemplateProject(string name, ILogger logger)
+public class PluginTemplateProject(string name, AppContext appContext)
 {
     public string Name { get; } = name;
+    public AppContext AppContext { get; } = appContext;
 
     public async Task CopyTo(string directory)
     {
@@ -22,21 +22,21 @@ public class PluginTemplateProject(string name, ILogger logger)
         var branch = "wip";
         var templateUri = $"https://github.com/superjmn/btcpayserver-plugin-template/archive/refs/heads/{branch}.zip";
 
-        logger.LogInformation("Fetching template from {Uri}", templateUri);
+        AppContext.Logger.LogInformation("Fetching template from {Uri}", templateUri);
 
         await ExtractTemplate(templateUri, branch, directory);
 
-        logger.LogInformation("Plugin added");
+        AppContext.Logger.LogInformation("Plugin added");
     }
 
     private void ReplaceTextInTemplateFiles(string directory)
     {
-        Utils.ReplaceStringInFiles(directory, "MyPlugin", Name);
+        ReplaceUtils.ReplaceStringInFiles(directory, "MyPlugin", Name);
     }
 
     private void RenameTemplateFiles(string directory)
     {
-        Utils.ReplaceStringInFilenames(directory, "MyPlugin", Name, logger);
+        ReplaceUtils.ReplaceStringInFilenames(directory, "MyPlugin", Name);
     }
 
     private async Task ExtractTemplate(string templateUri, string branch, string directory)

@@ -5,16 +5,17 @@ namespace BTCPayTool.Core.Model;
 
 public class Plugin
 {
-    private readonly ILogger logger;
 
-    public Plugin(string root, string name, IGitClient gitClient, ILogger logger)
+    public Plugin(string root, string name, IGitClient gitClient, AppContext appContext)
     {
-        this.logger = logger;
+        AppContext = appContext;
         Root = root;
         Name = name;
         PluginRoot = Path.Combine(root, "Plugins", name);
         GitClient = gitClient;
     }
+
+    public AppContext AppContext { get; }
 
     public string Root { get; }
     public string Name { get; }
@@ -23,7 +24,7 @@ public class Plugin
 
     public async Task<string> Create()
     {
-        logger.LogInformation("Adding plugin {Name}...", Name);
+        AppContext.Logger.LogInformation("Adding plugin {Name}...", Name);
 
         if (Directory.Exists(PluginRoot))
         {
@@ -31,7 +32,7 @@ public class Plugin
         }
 
         await AddPluginCore();
-        AddPluginProjectToSolution();
+        await AddPluginProjectToSolution();
 
         return PluginRoot;
     }
@@ -39,14 +40,14 @@ public class Plugin
     private async Task AddPluginCore()
     {
         Directory.CreateDirectory(PluginRoot);
-        await new PluginTemplateProject(Name, logger).CopyTo(PluginRoot);
+        await new PluginTemplateProject(Name, AppContext).CopyTo(PluginRoot);
         RenameTemplateFiles();
         ReplaceTextInTemplateFiles();
     }
 
-    private void AddPluginProjectToSolution()
+    private async Task AddPluginProjectToSolution()
     {
-        logger.LogInformation("Adding plugin to solution...");
+        AppContext.Logger.LogInformation("Adding plugin to solution...");
 
         var projectFiles = Directory.GetFiles(PluginRoot, "*.csproj");
         if (!projectFiles.Any())
@@ -55,16 +56,16 @@ public class Plugin
         }
 
         var projectFile = projectFiles.First();
-        Utils.AddProjectToSolution(projectFile);
+        await AppContext.SolutionHelper.AddProjectToSolution(projectFile);
     }
 
     private void RenameTemplateFiles()
     {
-        Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name, logger);
+        ReplaceUtils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name);
     }
 
     private void ReplaceTextInTemplateFiles()
     {
-        Utils.ReplaceStringInFiles(PluginRoot, "MyPlugin", Name);
+        ReplaceUtils.ReplaceStringInFiles(PluginRoot, "MyPlugin", Name);
     }
 }

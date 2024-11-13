@@ -4,19 +4,21 @@ namespace BTCPayTool.Core;
 
 public class GitClient : IGitClient
 {
-    public GitClient(string path)
+    public GitClient(string path, AppContext appContext)
     {
         Path = path;
+        AppContext = appContext;
     }
 
     public string Path { get; }
+    public AppContext AppContext { get; }
 
     public async Task AddSubmodule(string name, Uri uri)
     {
         if (!ExistsSubmodule(name))
         {
-            var arguments = $"submodule add {uri} {name}".Split(" ").AsReadOnly();
-            var result = await ProcessRunner.Instance.RunAsync(
+            var arguments = $"submodule add --branch master --depth 1 {uri} {name}".Split(" ").AsReadOnly();
+            var result = await AppContext.ProcessRunner.RunAsync(
                 new ProcessSpec {Executable = "git", Arguments = arguments, WorkingDirectory = Path},
                 CancellationToken.None);
 
@@ -26,17 +28,17 @@ public class GitClient : IGitClient
             }
         }
 
-        await ProcessRunner.Instance.RunAsync(
+        await AppContext.ProcessRunner.RunAsync(
             new ProcessSpec {Executable = "git", Arguments = "submodule init".Split(" ").AsReadOnly()},
             CancellationToken.None);
-        await ProcessRunner.Instance.RunAsync(
+        await AppContext.ProcessRunner.RunAsync(
             new ProcessSpec {Executable = "git", Arguments = "submodule update".Split(" ").AsReadOnly()},
             CancellationToken.None);
     }
 
     public async Task Init()
     {
-        await ProcessRunner.Instance.RunAsync(
+        await AppContext.ProcessRunner.RunAsync(
             new ProcessSpec {Executable = "git", Arguments = ["init"], WorkingDirectory = Path},
             CancellationToken.None);
     }

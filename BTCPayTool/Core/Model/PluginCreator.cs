@@ -4,20 +4,19 @@ namespace BTCPayTool.Core.Model;
 
 public class PluginCreator
 {
-    private readonly ILogger logger;
-
-    public PluginCreator(IGitClient gitClient, string root, ILogger logger)
+    public PluginCreator(IGitClient gitClient, string root, AppContext appContext)
     {
-        this.logger = logger;
         GitClient = gitClient;
         Root = root;
+        AppContext = appContext;
     }
 
     public IGitClient GitClient { get; }
     public string Root { get; }
+    public AppContext AppContext { get; }
 
     public Task<string> Create(string name)
     {
-        return new Plugin(Root, name, GitClient, logger).Create();
+        return new Plugin(Root, name, GitClient, AppContext).Create();
     }
 }
