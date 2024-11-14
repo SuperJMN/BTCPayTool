@@ -1,65 +1,73 @@
+using BTCPayTool.Misc;
+using Microsoft.Extensions.Logging;
+
 namespace BTCPayTool.Core.Model;
 
 public class PluginSolution
 {
-    public string Root { get; }
-    public string Name { get; }
-    public IGitClient GitClient { get; }
-
-    public PluginSolution(string root, string name, IGitClient gitClient)
+    public PluginSolution(string root, string name, IGitClient gitClient, AppContext appContext)
     {
         Root = root;
         Name = name;
         GitClient = gitClient;
+        AppContext = appContext;
     }
-    
-    public Task<Result> Initialize()
-    {
-        return Result.Success()
-            .Bind(InitRepo)
-            .Bind(CreateSolution)
-            .Bind(AddBtcPayServerSubmodule);
-    }
-    
-    private async Task<Result> InitRepo()
-    {
-        Log.Information("Initializing repository...");
 
-        return Result.Try(() => Directory.CreateDirectory(Root))
-            .Bind(_ => GitClient.Init());
-    }
-    
-    private async Task<Result> CreateSolution()
+    public string Root { get; }
+    public string Name { get; }
+    public IGitClient GitClient { get; }
+    public AppContext AppContext { get; }
+
+    public async Task Initialize()
     {
-        Log.Information("Creating solution file...");
-        
+        await InitRepo();
+        await CreateSolution();
+        await AddBtcPayServerSubmodule();
+    }
+
+    private Task InitRepo()
+    {
+        AppContext.Logger.LogInformation("Initializing repository...");
+
+        Directory.CreateDirectory(Root);
+        GitClient.Init();
+        return Task.CompletedTask;
+    }
+
+    private async Task CreateSolution()
+    {
+        AppContext.Logger.LogInformation("Creating solution file...");
+
         var solutionName = Name + ".sln";
         if (File.Exists(solutionName))
         {
-            return Result.Failure("Solution file already exists");
+            throw new InvalidOperationException("Solution file already exists.");
         }
-        
-        return Result.Try(() => ProcessWrapper.Execute("dotnet", $"new sln --name {Name}"));
+
+        var arguments = $"new sln --name {Name}";
+        await AppContext.ProcessRunner.RunAsync(new ProcessSpec {Executable = "dotnet", Arguments = arguments.Split(" ").AsReadOnly()}, CancellationToken.None);
     }
-    
-    private async Task<Result> AddBtcPayServerSubmodule()
+
+    private async Task AddBtcPayServerSubmodule()
     {
-        Log.Information("Adding BTCPayServer submodule...");
+        AppContext.Logger.LogInformation("Adding BTCPayServer submodule...");
 
         if (Directory.Exists("btcpayserver"))
         {
-            return Result.Failure("Submodule already exists.");
+            throw new InvalidOperationException("Submodule already exists.");
         }
 
-        return GitClient.AddSubmodule("btcpayserver", new Uri("https://github.com/btcpayserver/btcpayserver"))
-            .Bind(AddBtcPayProjectsToSolution);
+        await GitClient.AddSubmodule("btcpayserver", new Uri("https://github.com/btcpayserver/btcpayserver"));
+        await AddBtcPayProjectsToSolution();
     }
 
-    private Result AddBtcPayProjectsToSolution()
+    private async Task AddBtcPayProjectsToSolution()
     {
-        return Result.Try(() => Directory.GetFiles(Root, "BTCPayServer*.csproj", SearchOption.AllDirectories))
-            .Bind(strings => strings.Select(Utils.AddProjectToSolution).Combine());
+        var projectFiles = Directory.GetFiles(Root, "BTCPayServer*.csproj", SearchOption.AllDirectories);
+
+        foreach (var projectFile in projectFiles)
+        {
+            await AppContext.SolutionHelper.AddProjectToSolution(projectFile);
+        }
     }
-    
-   
 }

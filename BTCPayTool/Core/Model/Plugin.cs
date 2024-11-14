@@ -1,59 +1,71 @@
+using BTCPayTool.Misc;
+using Microsoft.Extensions.Logging;
+
 namespace BTCPayTool.Core.Model;
 
 public class Plugin
 {
-    public Plugin(ZafiroPath root, string name, IGitClient gitClient)
+
+    public Plugin(string root, string name, IGitClient gitClient, AppContext appContext)
     {
+        AppContext = appContext;
         Root = root;
         Name = name;
-        PluginRoot = root.Combine("Plugins").Combine(name);
+        PluginRoot = Path.Combine(root, "Plugins", name);
         GitClient = gitClient;
     }
 
-    public ZafiroPath Root { get; }
+    public AppContext AppContext { get; }
+
+    public string Root { get; }
     public string Name { get; }
-
     public IGitClient GitClient { get; }
+    public string PluginRoot { get; }
 
-    public ZafiroPath PluginRoot { get; }
-
-    public async Task<Result<ZafiroPath>> Create()
+    public async Task<string> Create()
     {
-        Log.Information("Adding plugin {Name}...", Name);
+        AppContext.Logger.LogInformation("Adding plugin {Name}...", Name);
 
-        if (Path.Exists(PluginRoot))
+        if (Directory.Exists(PluginRoot))
         {
-            return Result.Failure<ZafiroPath>($"Plugin {Name} already exists");
+            throw new InvalidOperationException($"Plugin {Name} already exists");
         }
 
-        return await AddPluginCore().Bind(AddPluginProjectToSolution).Map(() => PluginRoot);
+        await AddPluginCore();
+        await AddPluginProjectToSolution();
+
+        return PluginRoot;
     }
 
-    private Result AddPluginProjectToSolution()
+    private async Task AddPluginCore()
     {
-        Log.Information("Adding plugin to solution...");
-
-        var projectResult = Result.Try(() => Directory.GetFiles(PluginRoot, "*.csproj")).Bind(strings => strings.TryFirst().ToResult("Cannot find project file."));
-        
-        return projectResult
-            .Bind(Utils.AddProjectToSolution);
+        Directory.CreateDirectory(PluginRoot);
+        await new PluginTemplateProject(Name, AppContext).CopyTo(PluginRoot);
+        RenameTemplateFiles();
+        ReplaceTextInTemplateFiles();
     }
 
-    private Task<Result> AddPluginCore()
+    private async Task AddPluginProjectToSolution()
     {
-        return Result.Try(() => Directory.CreateDirectory(PluginRoot))
-            .Bind(_ => new PluginTemplateProject(Name).CopyTo(PluginRoot))
-            .Bind(RenameTemplateFiles)
-            .Bind(ReplaceTextInTemplateFiles);
+        AppContext.Logger.LogInformation("Adding plugin to solution...");
+
+        var projectFiles = Directory.GetFiles(PluginRoot, "*.csproj");
+        if (!projectFiles.Any())
+        {
+            throw new FileNotFoundException("Cannot find project file.");
+        }
+
+        var projectFile = projectFiles.First();
+        await AppContext.SolutionHelper.AddProjectToSolution(projectFile);
     }
 
-    private Result ReplaceTextInTemplateFiles()
+    private void RenameTemplateFiles()
     {
-        return Result.Try(() => Utils.ReplaceStringInFiles(PluginRoot, "MyPlugin", Name));
+        ReplaceUtils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name);
     }
 
-    private Result RenameTemplateFiles()
+    private void ReplaceTextInTemplateFiles()
     {
-        return Result.Try(() => Utils.ReplaceStringInFilenames(PluginRoot, "MyPlugin", Name));
+        ReplaceUtils.ReplaceStringInFiles(PluginRoot, "MyPlugin", Name);
     }
 }

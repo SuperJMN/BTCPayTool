@@ -1,31 +1,50 @@
+using BTCPayTool.Misc;
+
 namespace BTCPayTool.Core;
 
 public class GitClient : IGitClient
 {
-    public GitClient(ZafiroPath path)
+    public GitClient(string path, AppContext appContext)
     {
         Path = path;
+        AppContext = appContext;
     }
 
-    public ZafiroPath Path { get; }
+    public string Path { get; }
+    public AppContext AppContext { get; }
 
-    public Result AddSubmodule(string name, Uri uri)
+    public async Task AddSubmodule(string name, Uri uri)
     {
-        return
-            Result
-                .Success()
-                .BindIf(() => !ExistsSubmodule(name), () => ProcessWrapper.Execute("git", $"submodule add {uri} {name}", Path))
-                .Bind(() => ProcessWrapper.Execute("git", "submodule init"))
-                .Bind(() => ProcessWrapper.Execute("git", "submodule update"));
+        if (!ExistsSubmodule(name))
+        {
+            var arguments = $"submodule add --branch master --depth 1 {uri} {name}".Split(" ").AsReadOnly();
+            var result = await AppContext.ProcessRunner.RunAsync(
+                new ProcessSpec {Executable = "git", Arguments = arguments, WorkingDirectory = Path},
+                CancellationToken.None);
+
+            if (result != 0)
+            {
+                throw new ApplicationException("Add submodule failed");
+            }
+        }
+
+        await AppContext.ProcessRunner.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = "submodule init".Split(" ").AsReadOnly()},
+            CancellationToken.None);
+        await AppContext.ProcessRunner.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = "submodule update".Split(" ").AsReadOnly()},
+            CancellationToken.None);
     }
 
-    public Result Init()
+    public async Task Init()
     {
-        return ProcessWrapper.Execute("git", "init", Path);
+        await AppContext.ProcessRunner.RunAsync(
+            new ProcessSpec {Executable = "git", Arguments = ["init"], WorkingDirectory = Path},
+            CancellationToken.None);
     }
 
     private bool ExistsSubmodule(string name)
     {
-        return Directory.Exists(Path.Combine(name));
+        return Directory.Exists(System.IO.Path.Combine(Path, name));
     }
 }

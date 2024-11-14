@@ -1,60 +1,55 @@
-﻿using BTCPayTool.Core;
-using BTCPayTool.Core.Model;
-using CommandLine;
+﻿using System.CommandLine;
+using BTCPayTool.Core;
+using Microsoft.Extensions.Logging;
+using BTCPayTool.Misc;
+using AppContext = BTCPayTool.Core.AppContext;
 
 namespace BTCPayTool;
 
 public static class Program
 {
+    private static readonly ILogger Logger = Misc.Logger.GlobalLogger;
+
     public static async Task<int> Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .CreateLogger();
+        var tool = GetTool();
+        var command = RootCommand(tool);
 
-        var mapResult = await Parser.Default.ParseArguments<NewPluginOptions, InitializePluginSolutionOptions>(args)
-            .MapResult<NewPluginOptions, InitializePluginSolutionOptions, Task<int>>(
-                NewPlugin,
-                InitializePluginSolution, 
-                errors => Task.FromResult(HandleParseError(errors.ToList())));
-
-        return mapResult;
+        return await command.InvokeAsync(args);
     }
 
-    private static async Task<int> InitializePluginSolution(InitializePluginSolutionOptions opts)
+    private static Tool GetTool()
     {
-        var outputDir = Directory.GetCurrentDirectory();
-        var solution = new PluginSolution(outputDir, opts.Name, new GitClient(outputDir));
-
-        var result = await solution.Initialize()
-            .Tap(() => Log.Information("The plugin solution has been initialized. You can now add your first plugin by executing: btcpay new-plugin --name MyPlugin"))
-            .TapError(error => Log.Error("Plugin creation failed: {Error}", error));
-
-        return result.Match(() => 0, _ => -1);
+        var processRunner = new ProcessRunner(Misc.Logger.GetLogger<ProcessRunner>());
+        var appContext = new AppContext(Logger, processRunner, new SolutionHelper(processRunner));
+        var tool = new Tool(appContext);
+        return tool;
     }
 
-    private static async Task<int> NewPlugin(NewPluginOptions opts)
+    private static RootCommand RootCommand(Tool tool)
     {
-        var outputDir = Directory.GetCurrentDirectory();
-        var plugin = new Plugin(outputDir, opts.Name, new GitClient(outputDir));
-        var result = await plugin.Create();
+        var rootCommand = new RootCommand("BTCPayTool CLI tool");
 
-        result
-            .Tap(pluginPath => Log.Information("The plugin has been added successfully! You can see it under {Path}", pluginPath))
-            .TapError(error => Log.Error("Plugin creation failed: {Error}", error));
+        var newPluginCommand = new Command("new-plugin", "Creates a new plugin");
+        var nameOption = new Option<string>("--name", "The name of the plugin") { IsRequired = true };
+        newPluginCommand.AddOption(nameOption);
 
-        return result.Match(_ => 0, _ => -1);
-    }
-
-    private static int HandleParseError(ICollection<Error> errors)
-    {
-        var result = -2;
-
-        if (errors.Any(x => x is HelpRequestedError || x is VersionRequestedError || x is HelpVerbRequestedError))
+        newPluginCommand.SetHandler(async (string name) =>
         {
-            result = -1;
-        }
+            await tool.NewPlugin(new NewPluginOptions { Name = name });
+        }, nameOption);
 
-        return result;
+        var initPluginCommand = new Command("init-plugin", "Initializes a new plugin solution");
+        var solutionNameOption = new Option<string>("--name", "The name of the solution") { IsRequired = true };
+        initPluginCommand.AddOption(solutionNameOption);
+
+        initPluginCommand.SetHandler(async (string name) =>
+        {
+            await tool.InitializePluginSolution(new InitializePluginSolutionOptions { Name = name });
+        }, solutionNameOption);
+
+        rootCommand.AddCommand(newPluginCommand);
+        rootCommand.AddCommand(initPluginCommand);
+        return rootCommand;
     }
 }

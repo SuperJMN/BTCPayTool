@@ -1,6 +1,6 @@
 namespace BTCPayTool.Core;
 
-public static class Utils
+public class ReplaceUtils
 {
     public static void ReplaceStringInFilenames(string directory, string toReplace, string replacement)
     {
@@ -12,11 +12,11 @@ public static class Utils
 
             if (fileName.Contains(toReplace))
             {
-                var dir = Path.GetDirectoryName(file);
+                var dir = Path.GetDirectoryName(file) ?? throw new InvalidOperationException("Invalid directory path");
                 var newFilename = fileName.Replace(toReplace, replacement);
                 var newPath = Path.Combine(dir, newFilename);
+
                 File.Move(file, newPath, true);
-                Log.Debug("Renamed: {Old}, {New}", file, newPath);
             }
         }
     }
@@ -34,10 +34,5 @@ public static class Utils
                 File.WriteAllText(file, newContent);
             }
         }
-    }
-
-    public static Result AddProjectToSolution(string projectPath)
-    {
-        return Result.Try(() => ProcessWrapper.Execute("dotnet", $"sln add {projectPath}"));
     }
 }
